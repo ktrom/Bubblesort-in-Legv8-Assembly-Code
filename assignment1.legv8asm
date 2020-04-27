@@ -1,0 +1,70 @@
+//Kyle Trom, netid: ktrom Shiv Sundar, netid: ssundar
+main: 
+	ADD X0, X19, XZR		//Stores X19 (the start of the array, assumed to be given to main, 0 in our case) in argument register X0 
+	ADDI X1, XZR, #4		//Stores n (the size of the array) (in this case n = 4)
+	BL fill				//Calls fill to fill array				
+	BL bubblesort
+	finish_bubblesort:
+	B end
+
+ //ArrayBuilder
+fill:			// fill takes the start of the array as X0 and the size of the array of X1 and the first n consecutive integers in reverse order
+	ADD X9, X9, XZR
+	ADDI X11, X1, #0
+loop:
+	LSL X10, X9, #3
+	ADD X10, X0, X10
+	STUR X1, [X10, #0]
+	ADDI X9, X9, #1
+	SUBI X1, X1, #1
+	CBZ X1, end_loop
+	CBNZ X1, loop
+end_loop:
+	ADDI X1, X11, #0
+	BR LR
+
+swap:			//swap takes two address arguments and swaps the data
+	LDUR X9, [X0, #0]
+	LDUR X10,[X1, #0]
+	STUR X9, [X1, #0]
+	STUR X10,[X0, #0]
+	B percolata
+
+compare: 		//Takes an address, X0, and returns 1 in X20  if the data in address is greater than the data in address + 1, else 0
+	LDUR X9, [X0, #0]
+	LDUR X10,[X0, #8]
+	SUBS X11, X9, X10
+	B.LT return_zero
+	ADDI X20, XZR, #1
+	BR LR
+
+return_zero:
+	ADDI X20, XZR, #0
+	BR LR
+	
+percolate:              //Percolate takes an address in X0 and the size of the array in X1, iterates through the array, compares elts and swaps if necessary            
+	LSL X12, X1, #3			//X12 is the size of the array in bytes
+	ADD X12, X12, X0		//X12 is now the end address of the array
+percolate_loop:
+	SUBS X13, X12, X0	
+	B.EQ finish_percolate
+	BL compare
+	ADDI X1, X0, #8
+	CBNZ X20, swap
+	percolata:	
+	ADDI X0, X0, #8
+	B percolate_loop
+
+bubblesort: 		//Takes X0 as start of the array (index) and X1 as size of the array (in elements)
+	ADDI X21, X0, #0	//X21 is the start of the array
+	ADDI X14, X1, #0 	//X14 is size left to sort of the array
+	bubble_loop:
+		ADDI X0, X21, #0
+		ADDI X1, X14, #0
+		BL percolate
+		finish_percolate:
+		SUBI X14, X14, #1
+		CBZ X14, finish_bubblesort
+		B bubble_loop
+		
+end:
